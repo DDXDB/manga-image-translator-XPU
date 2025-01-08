@@ -124,14 +124,15 @@ class MangaTranslator:
 
         self.ignore_errors = params.get('ignore_errors', False)
         # check mps for apple silicon or cuda for nvidia
-        device = 'mps' if torch.backends.mps.is_available() else 'cuda'
+        device = 'mps' if torch.backends.mps.is_available() else 'xpu'
+        self.device = device if torch.xpu.is_available() else 'cuda'
         self.device = device if params.get('use_gpu', False) else 'cpu'
         self._gpu_limited_memory = params.get('use_gpu_limited', False)
         if self._gpu_limited_memory and not self.using_gpu:
             self.device = device
-        if self.using_gpu and ( not torch.cuda.is_available() and not torch.backends.mps.is_available()):
+        if self.using_gpu and ( not torch.cuda.is_available() and not torch.xpu.is_available() and not torch.backends.mps.is_available()):
             raise Exception(
-                'CUDA or Metal compatible device could not be found in torch whilst --use-gpu args was set.\n'
+                'CUDA or Metal or XPU compatible device could not be found in torch whilst --use-gpu args was set.\n'
                 'Is the correct pytorch version installed? (See https://pytorch.org/)')
         if params.get('model_dir'):
             ModelWrapper._MODEL_DIR = params.get('model_dir')
